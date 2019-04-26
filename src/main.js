@@ -9,14 +9,17 @@ import store from './store'
 import VueCookies from 'vue-cookies'
 import Vuelidate from 'vuelidate'
 import AppServerCof from './appServerConfig'
+import VueTouch from 'vue-touch'
+
 
 import axios from 'axios'
-axios.interceptors.request.use(
-  config => {
-    /** 给所有的请求都添加token信息
+/**
+ *   * 给所有的请求都添加相关信息，相当于拦截
      * token和key虽然存储在localStorage，但是存在过期问题，在程序启动时这样绑定不好
      * 把token信息保存在vuex中，老老实实每次调用附上token
-     */
+axios.interceptors.request.use(
+  config => {
+  
     config.headers.accessKey = AppServerCof.appKey;
     config.headers.accessToken = AppServerCof.appSecret;
     return config;
@@ -25,8 +28,11 @@ axios.interceptors.request.use(
     return Promise.reject(err);
   }
 )
+
+**/
 Vue.prototype.$axios = axios
 
+Vue.use(VueTouch, {name: 'v-touch'})
 Vue.use(Vuelidate)
 Vue.config.productionTip = false
 Vue.use(Vuetify)
@@ -136,36 +142,33 @@ new Vue({
       let info = localStorage.getItem("geeklemon-ascessInfo");
       try {
         if (info) {
-          let {
-            accessKey,
-            accessToken,
-            timestamp
-          } = JSON.parse(info);
+          let accessInfo = JSON.parse(info);
+          let timestamp = accessInfo.timestamp;
           let now = new Date().getTime();
           let diff = now - timestamp;
           if (diff / (24 * 3600 * 1000) > 1) {
             // 后台控制1天过期
-            getAccessInfo();
-          }else{
+            this.getAccessInfo();
+          } else {
             this.$store.commit('vauleAccessInfo', accessInfo);
           }
-
           return;
         }
       } catch (e) {
         console.log("checkAccess err:" + JSON.stringify(e));
       }
-      getAccessInfo()
+      this.getAccessInfo()
     },
     getAccessInfo() {
       // 获取accessKey和accessToken
       let appKeyAndSecret = new URLSearchParams();
-      appKeyAndSecret.append("appKey",AppServerCof.appKey);
-      appKeyAndSecret.append("appSecret",AppServerCof.appSecret);
-      let accessInfo = await this.$axios.post('/app/api/accessToken',appKeyAndSecret);
-      this.$store.commit('vauleAccessInfo', accessInfo);
-      let accessInfoStr = JSON.stringify(accessInfo);
-      localStorage.setItem(accessInfoStr);
+      appKeyAndSecret.append("appKey", AppServerCof.appKey);
+      appKeyAndSecret.append("appSecret", AppServerCof.appSecret);
+      this.$axios.post('/app/api/accessToken', appKeyAndSecret,(res)=>{
+        this.$store.commit('vauleAccessInfo', accessInfo);
+        let accessInfoStr = JSON.stringify(accessInfo);
+        localStorage.setItem(accessInfoStr);
+      });
     }
 
   },

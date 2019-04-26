@@ -3,7 +3,9 @@
     <drawer></drawer>
     <toolbar></toolbar>
     <v-content>
+      <v-touch v-on:swiperight="swiperleft" class="wrapper">
       <router-view/>
+      </v-touch>
     </v-content>
     <footer></footer>
   </v-app>
@@ -31,6 +33,11 @@ export default {
       this.themeDark = !this.themeDark;
     });
     // checklogin();
+  },
+  methods:{
+    swiperleft(){
+      this.$router.back()
+    }
   },
   name: "App"
 };
